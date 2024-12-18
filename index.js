@@ -2,12 +2,18 @@ import express from "express";
 import db from "./config/db.js";
 import adminRoutes from "./routes/adminRoutes.js"
 import bodyParser from "body-parser";
-
+import cors from "cors"
 const app = express();
 
 app.use(express.json())
 app.use(bodyParser.json())
-
+app.use(cors(
+    {
+      origin: 'http://localhost:3000',
+      credentials: true
+    }
+  ))
+  
 
 app.use("/admin", adminRoutes)
 
