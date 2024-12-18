@@ -67,3 +67,22 @@ export const register = async (req, res) => {
         res.status(500).json({ error: error.message })
     }
 }
+
+export const getProfile = async (req, res) => {
+    try {
+        const adminId = req.admin.id
+        const query = `SELECT * FROM admin WHERE id = ?`
+        db.query(query, [adminId], (err, results) => {
+            if (err) {
+                return res.status(500).json({ message: 'Error finding admin', error: err.message })
+            }
+            if (results.length === 0) {
+                return res.status(404).json({ message: 'Admin not found' })
+            }
+            const admin = results[0]
+            res.status(200).json({ admin })
+        })
+    } catch (error) {
+        res.status(500).json({ error: error.message })
+    }
+}
