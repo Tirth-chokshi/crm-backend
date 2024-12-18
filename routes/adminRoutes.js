@@ -1,5 +1,5 @@
 import express from 'express'
-import { register } from '../controllers/adminControllers.js'
+import { register,login } from '../controllers/adminControllers.js'
 const router = express.Router()
 
 router.get('/', (req, res) => {
@@ -7,5 +7,6 @@ router.get('/', (req, res) => {
 })
 
 router.post('/register',register)
+router.post('/login',login)
 
 export default router
