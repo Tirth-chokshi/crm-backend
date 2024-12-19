@@ -1,6 +1,7 @@
 import express from "express";
 import db from "./config/db.js";
 import adminRoutes from "./routes/adminRoutes.js"
+import customerRoutes from "./routes/customerRoutes.js"
 import bodyParser from "body-parser";
 import cors from "cors"
 const app = express();
@@ -16,6 +17,7 @@ app.use(cors(
   
 
 app.use("/admin", adminRoutes)
+app.use('/customers', customerRoutes)
 
 db.connect((err) => {
   if (err) {
