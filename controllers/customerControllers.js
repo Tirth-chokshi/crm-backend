@@ -81,3 +81,12 @@ export const bulkUploadCustomers = (req, res) => {
     });
   });
 };
+
+
+export const getTotalCustomers = (req, res) => {
+  const query = "SELECT COUNT(*) as total FROM Customers WHERE is_active = TRUE";
+  db.query(query, (error, results) => {
+      if (error) return res.status(500).json({ error: error.message });
+      res.status(200).json(results[0]);
+  });
+}
