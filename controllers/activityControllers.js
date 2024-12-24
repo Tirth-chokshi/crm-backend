@@ -2,7 +2,7 @@ import db from "../config/db.js";
 
 export const getPendingActivities = (req, res) => {
   const query =
-    "SELECT COUNT(*) as pending_count FROM customer_activities WHERE is_resolved = 0";
+    "SELECT COUNT(*) as pending_count FROM customer_activity WHERE case_resolved = 'Pending'";
   db.query(query, (error, results) => {
     if (error) return res.status(500).json({ error: error.message });
     res.status(200).json(results);
@@ -11,7 +11,7 @@ export const getPendingActivities = (req, res) => {
 
 export const getResolvedActivities = (req, res) => {
   const query =
-    "SELECT COUNT(*) as resolved_count FROM customer_activities WHERE is_resolved = 1";
+    "SELECT COUNT(*) as resolved_count FROM customer_activity WHERE case_resolved = 'Resolved'";
   db.query(query, (error, results) => {
     if (error) return res.status(500).json({ error: error.message });
     res.status(200).json(results);
@@ -21,14 +21,13 @@ export const getResolvedActivities = (req, res) => {
 export const getRecentActivities = (req, res) => {
   const query = `
     SELECT 
-    at.type_name AS 'Activity type',
+    ca.activity_type AS 'Activity type',
     c.name AS 'Customer name',
     ca.activity_date AS 'Date',
-    IF(ca.is_resolved = 1, 'Resolved', 'Pending') AS 'Status'
+    IF(ca.case_resolved = 'Resolved', 'Resolved', 'Pending') AS 'Status'
   FROM 
-    customer_activities ca
-    JOIN customers c ON ca.customer_id = c.customer_id
-    JOIN activity_types at ON ca.activity_type_id = at.activity_type_id;
+    customer_activity ca
+    JOIN customers c ON ca.customer_id = c.customer_id;
     `;
 
   db.query(query, (error, results) => {
@@ -37,13 +36,6 @@ export const getRecentActivities = (req, res) => {
   });
 };
 
-export const getActivityTypesTable = (req, res) => {
-  const query = "SELECT * FROM  customer_activities";
-  db.query(query, (error, results) => {
-    if (error) return res.status(500).json({ error: error.message });
-    res.status(200).json(results);
-  });
-};
 
 export const getUpcomingActivities = (req, res) => {
   const query = `
@@ -88,7 +80,6 @@ export const getMainActivity = (req, res) => {
     res.status(200).json(results);
   });
 };
-
 
 export const createActivity = async (req, res) => {
   try {
@@ -200,3 +191,39 @@ export const activityDropdown = (req, res) => {
       res.status(200).json(results);
   });
 }
+
+export const dailyFollowups = (req, res) => {
+  const query = `
+    SELECT 
+      ca.customer_activity_id AS 'Activity ID',
+      c.name AS 'Customer Name',
+      ca.activity_type AS 'Activity Type',
+      ca.activity_date AS 'Date',
+      CASE 
+        WHEN ca.case_resolved = 'Resolved' THEN 'Resolved'
+        ELSE 'Not Resolved'
+      END AS 'Status'
+    FROM 
+      customer_activity ca
+    JOIN 
+      customers c ON ca.customer_id = c.customer_id
+    WHERE 
+      ca.next_followup_date = CURDATE();
+  `;
+  
+  db.query(query, (error, results) => {
+    if (error) return res.status(500).json({ error: error.message });
+    res.status(200).json(results);
+  });
+}
+
+
+export const getActivityById = (req, res) => {
+  const { id } = req.params;
+  const query = "SELECT * FROM customer_activity WHERE customer_activity_id = ?";
+  db.query(query, [id], (error, results) => {
+    if (error) return res.status(500).json({ error: error.message });
+    if (results.length === 0) return res.status(404).json({ message: "Activity not found." });
+    res.status(200).json(results[0]);
+  });
+};
