@@ -280,3 +280,13 @@ export const updateActivity = (req, res) => {
     res.status(200).json({ message: "Activity updated successfully!" });
   });
 };
+
+export const getCustomerActivity = (req, res) => {
+  const { id } = req.params;
+  const query = "SELECT * FROM customer_activity WHERE customer_id = ?";
+  db.query(query, [id], (error, results) => {
+    if (error) return res.status(500).json({ error: error.message });
+    if (results.length === 0) return res.status(404).json({ message: "Activity not found." });
+    res.status(200).json(results);
+  });
+};
