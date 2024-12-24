@@ -230,16 +230,53 @@ export const getActivityById = (req, res) => {
 export const updateActivity = (req, res) => {
   const { id } = req.params;
   const { customer_response, overall_response, comments, resolution, case_resolved, next_followup_date } = req.body;
+
+  // Constructing the dynamic SET clause
+  let fields = [];
+  let values = [];
+
+  if (customer_response !== undefined) {
+    fields.push("customer_response = ?");
+    values.push(customer_response);
+  }
+  if (overall_response !== undefined) {
+    fields.push("overall_response = ?");
+    values.push(overall_response);
+  }
+  if (comments !== undefined) {
+    fields.push("comments = ?");
+    values.push(comments);
+  }
+  if (resolution !== undefined) {
+    fields.push("resolution = ?");
+    values.push(resolution);
+  }
+  if (case_resolved !== undefined) {
+    fields.push("case_resolved = ?");
+    values.push(case_resolved);
+  }
+  if (next_followup_date !== undefined) {
+    fields.push("next_followup_date = ?");
+    values.push(next_followup_date);
+  }
+
+  // If no fields to update, return early
+  if (fields.length === 0) {
+    return res.status(400).json({ message: "No fields provided for update." });
+  }
+
+  // Add the id for the WHERE clause
+  values.push(id);
+
   const query = `
     UPDATE customer_activity
-    SET customer_response = ?, overall_response = ?, comments = ?, resolution = ?, case_resolved = ?, next_followup_date = ?
+    SET ${fields.join(", ")}
     WHERE customer_activity_id = ?
   `;
 
-  db.query(query, [customer_response, overall_response, comments || null, resolution || null, case_resolved, next_followup_date || null, id], (error, results) => {
+  db.query(query, values, (error, results) => {
     if (error) return res.status(500).json({ error: error.message });
     if (results.affectedRows === 0) return res.status(404).json({ message: "Activity not found." });
     res.status(200).json({ message: "Activity updated successfully!" });
   });
-
-}
+};
