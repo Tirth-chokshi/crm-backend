@@ -5,8 +5,8 @@ const router = express.Router()
 
 router.get('/',getAllCustomers)
  // you have to put specific route first to make them work /total comes before then /:id
- router.get('/dropdown',customerDropdown)
- router.get('/total',getTotalCustomers)
+router.get('/dropdown',customerDropdown)
+router.get('/total',getTotalCustomers)
 router.get('/:id',getCustomerById)
 router.delete('/:id',deleteCustomer)
 router.put('/:id',updateCustomer)

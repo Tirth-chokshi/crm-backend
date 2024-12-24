@@ -40,17 +40,16 @@ export const getRecentActivities = (req, res) => {
 export const getUpcomingActivities = (req, res) => {
   const query = `
     SELECT 
-  at.type_name AS 'Activity type',
-  c.name AS 'Customer name',
-  ca.next_followup_date AS 'Date'
-FROM 
-  customer_activities ca
-  JOIN customers c ON ca.customer_id = c.customer_id
-  JOIN activity_types at ON ca.activity_type_id = at.activity_type_id
-WHERE 
-  ca.next_followup_date >= CURDATE()
-ORDER BY 
-  ca.next_followup_date ASC;
+      ca.activity_type AS 'Activity type',
+      c.name AS 'Customer name',
+      ca.next_followup_date AS 'Date'
+    FROM 
+      customer_activity ca
+      JOIN customers c ON ca.customer_id = c.customer_id
+    WHERE 
+      ca.next_followup_date >= CURDATE()
+    ORDER BY 
+      ca.next_followup_date ASC;
     `;
   db.query(query, (error, results) => {
     if (error) return res.status(500).json({ error: error.message });
@@ -227,3 +226,20 @@ export const getActivityById = (req, res) => {
     res.status(200).json(results[0]);
   });
 };
+
+export const updateActivity = (req, res) => {
+  const { id } = req.params;
+  const { customer_response, overall_response, comments, resolution, case_resolved, next_followup_date } = req.body;
+  const query = `
+    UPDATE customer_activity
+    SET customer_response = ?, overall_response = ?, comments = ?, resolution = ?, case_resolved = ?, next_followup_date = ?
+    WHERE customer_activity_id = ?
+  `;
+
+  db.query(query, [customer_response, overall_response, comments || null, resolution || null, case_resolved, next_followup_date || null, id], (error, results) => {
+    if (error) return res.status(500).json({ error: error.message });
+    if (results.affectedRows === 0) return res.status(404).json({ message: "Activity not found." });
+    res.status(200).json({ message: "Activity updated successfully!" });
+  });
+
+}

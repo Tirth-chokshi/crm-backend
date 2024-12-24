@@ -7,7 +7,8 @@ import {
   createActivity,
   activityDropdown,
   dailyFollowups,
-  getActivityById
+  getActivityById,
+  updateActivity
 } from "../controllers/activityControllers.js"
 import express from "express"
 
@@ -22,5 +23,6 @@ router.get('/dropdown', activityDropdown)
 router.post("/create", createActivity)
 router.get('/dailyfollowup',dailyFollowups)
 router.get('/main/:id', getActivityById)
+router.put('/update/:id', updateActivity)
 
 export default router
