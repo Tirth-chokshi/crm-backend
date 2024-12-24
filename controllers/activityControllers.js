@@ -69,125 +69,134 @@ ORDER BY
 export const getMainActivity = (req, res) => {
   const query = `
     SELECT 
-    ca.activity_id AS 'Activity ID',
-    c.name AS 'Customer Name',
-    at.type_name AS 'Activity Type',
-    ca.activity_date AS 'Date',
-    IF(ca.is_resolved = 1, 'Resolved', 'Not Resolved') AS 'Status'
-FROM 
-    customer_activities ca
-JOIN 
-    customers c ON ca.customer_id = c.customer_id
-JOIN 
-    activity_types at ON ca.activity_type_id = at.activity_type_id;
-    `;
+      ca.customer_activity_id AS 'Activity ID',
+      c.name AS 'Customer Name',
+      ca.activity_type AS 'Activity Type',
+      ca.activity_date AS 'Date',
+      CASE 
+        WHEN ca.case_resolved = 'Resolved' THEN 'Resolved'
+        ELSE 'Not Resolved'
+      END AS 'Status'
+    FROM 
+      customer_activity ca
+    JOIN 
+      customers c ON ca.customer_id = c.customer_id;
+  `;
+  
   db.query(query, (error, results) => {
     if (error) return res.status(500).json({ error: error.message });
     res.status(200).json(results);
   });
 };
 
+
 export const createActivity = async (req, res) => {
-    try {
-        // 1. Required fields validation
-        const requiredFields = [
-            'customer_id',
-            'activity_date',
-            'activity_type_id',
-            'query_type_id',
-            'customer_response_type_id',
-            'overall_response_type_id',
-            'created_by'
-        ];
+  try {
+      // 1. Required fields validation
+      const requiredFields = [
+          'customer_id',
+          'activity_date',
+          'activity_type',
+          'query',
+          'customer_response',
+          'overall_response',
+          'created_by'
+      ];
 
-        const missingFields = requiredFields.filter(field => !req.body[field]);
-        if (missingFields.length > 0) {
-            return res.status(400).json({
-                success: false,
-                message: `Missing required fields: ${missingFields.join(', ')}`
-            });
-        }
+      const missingFields = requiredFields.filter(field => !req.body[field]);
+      if (missingFields.length > 0) {
+          return res.status(400).json({
+              success: false,
+              message: `Missing required fields: ${missingFields.join(', ')}`
+          });
+      }
 
-        // 2. Data type validation
-        if (!Date.parse(req.body.activity_date)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid activity_date format'
-            });
-        }
+      // 2. Data type validation
+      if (!Date.parse(req.body.activity_date)) {
+          return res.status(400).json({
+              success: false,
+              message: 'Invalid activity_date format'
+          });
+      }
 
-        // 3. Verify foreign keys exist
-        const checkQueries = [
-            'SELECT 1 FROM customers WHERE customer_id = ?',
-            'SELECT 1 FROM activity_types WHERE activity_type_id = ?',
-            'SELECT 1 FROM query_types WHERE query_type_id = ?',
-            'SELECT 1 FROM response_types WHERE response_type_id = ?',
-            'SELECT 1 FROM admin WHERE id = ?'
-        ];
+      // 3. Verify customer and admin exist
+      const checkQueries = [
+          'SELECT 1 FROM customers WHERE customer_id = ?',
+          'SELECT 1 FROM admin WHERE id = ?'
+      ];
 
-        const checkValues = [
-            req.body.customer_id,
-            req.body.activity_type_id,
-            req.body.query_type_id,
-            req.body.customer_response_type_id,
-            req.body.created_by
-        ];
+      const checkValues = [
+          req.body.customer_id,
+          req.body.created_by
+      ];
 
-        for (let i = 0; i < checkQueries.length; i++) {
-            const [rows] = await db.promise().query(checkQueries[i], [checkValues[i]]);
-            if (rows.length === 0) {
-                return res.status(400).json({
-                    success: false,
-                    message: `Invalid reference: ${requiredFields[i]} does not exist`
-                });
-            }
-        }
+      for (let i = 0; i < checkQueries.length; i++) {
+          const [rows] = await db.promise().query(checkQueries[i], [checkValues[i]]);
+          if (rows.length === 0) {
+              const fieldName = i === 0 ? 'customer_id' : 'created_by';
+              return res.status(400).json({
+                  success: false,
+                  message: `Invalid reference: ${fieldName} does not exist`
+              });
+          }
+      }
 
-        // 4. Main insert query
-        const query = `INSERT INTO customer_activities (
-            customer_id,
-            activity_date,
-            activity_type_id,
-            query_type_id,
-            customer_response_type_id,
-            overall_response_type_id,
-            comments,
-            is_resolved,
-            resolution,
-            next_followup_date,
-            created_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      // 4. Main insert query
+      const query = `INSERT INTO customer_activity (
+          customer_id,
+          activity_date,
+          activity_type,
+          query,
+          customer_response,
+          overall_response,
+          comments,
+          case_resolved,
+          resolution,
+          next_followup_date,
+          created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-        const [result] = await db.promise().query(query, [
-            req.body.customer_id,
-            req.body.activity_date,
-            req.body.activity_type_id,
-            req.body.query_type_id,
-            req.body.customer_response_type_id,
-            req.body.overall_response_type_id,
-            req.body.comments || null,
-            req.body.is_resolved || false,
-            req.body.resolution || null,
-            req.body.next_followup_date || null,
-            req.body.created_by
-        ]);
+      const [result] = await db.promise().query(query, [
+          req.body.customer_id,
+          req.body.activity_date,
+          req.body.activity_type,
+          req.body.query,
+          req.body.customer_response,
+          req.body.overall_response,
+          req.body.comments || null,
+          req.body.case_resolved || false,
+          req.body.resolution || null,
+          req.body.next_followup_date || null,
+          req.body.created_by
+      ]);
 
-        // 5. Return success response
-        res.status(201).json({
-            success: true,
-            message: 'Activity created successfully',
-            data: {
-                activity_id: result.insertId,
-                ...req.body
-            }
-        });
+      // 5. Return success response
+      res.status(201).json({
+          success: true,
+          message: 'Activity created successfully',
+          data: {
+              id: result.insertId,
+              ...req.body,
+              created_at: new Date(), 
+              modified_by: null,
+              modified_at: null
+          }
+      });
 
-    } catch (error) {
-        console.error('Error creating activity:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error creating activity',
-            error: error.message
-        });
-    }
+  } catch (error) {
+      console.error('Error creating activity:', error);
+      res.status(500).json({
+          success: false,
+          message: 'Error creating activity',
+          error: error.message
+      });
+  }
 };
+
+export const activityDropdown = (req, res) => {
+  const query = "SELECT activity_type_id, type_name FROM activity_types";
+  db.query(query, (error, results) => {
+      if (error) return res.status(500).json({ error: error.message });
+      res.status(200).json(results);
+  });
+}

@@ -3,6 +3,7 @@ import db from "./config/db.js";
 import adminRoutes from "./routes/adminRoutes.js"
 import customerRoutes from "./routes/customerRoutes.js"
 import activityRoutes from "./routes/activityRoutes.js"
+import queryRoutes from "./routes/queryRoutes.js"
 import bodyParser from "body-parser";
 import cors from "cors"
 const app = express();
@@ -20,6 +21,7 @@ app.use(cors(
 app.use("/admin", adminRoutes)
 app.use('/customers', customerRoutes)
 app.use('/activities', activityRoutes)
+app.use('/query', queryRoutes)
 
 db.connect((err) => {
   if (err) {

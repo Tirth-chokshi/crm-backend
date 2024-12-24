@@ -86,3 +86,11 @@ export const getProfile = async (req, res) => {
         res.status(500).json({ error: error.message })
     }
 }
+
+export const adminDropdown = (req, res) => {
+    const query = "SELECT id, username FROM admin";
+    db.query(query, (error, results) => {
+        if (error) return res.status(500).json({ error: error.message });
+        res.status(200).json(results);
+    });
+}
