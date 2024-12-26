@@ -42,7 +42,8 @@ export const getUpcomingActivities = (req, res) => {
     SELECT 
       ca.activity_type AS 'Activity type',
       c.name AS 'Customer name',
-      ca.next_followup_date AS 'Date'
+      ca.next_followup_date AS 'Next followup Date',
+      ca.case_resolved AS 'Status'
     FROM 
       customer_activity ca
       JOIN customers c ON ca.customer_id = c.customer_id
