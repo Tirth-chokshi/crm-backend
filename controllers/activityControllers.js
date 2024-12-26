@@ -48,7 +48,7 @@ export const getUpcomingActivities = (req, res) => {
       customer_activity ca
       JOIN customers c ON ca.customer_id = c.customer_id
     WHERE 
-      ca.next_followup_date >= CURDATE()
+      ca.next_followup_date > CURDATE()
     ORDER BY 
       ca.next_followup_date ASC;
     `;
@@ -198,7 +198,7 @@ export const dailyFollowups = (req, res) => {
       ca.customer_activity_id AS 'Activity ID',
       c.name AS 'Customer Name',
       ca.activity_type AS 'Activity Type',
-      ca.activity_date AS 'Date',
+      ca.next_followup_date AS 'Next followup Date',
       ca.case_resolved AS 'Status'
     FROM 
       customer_activity ca
