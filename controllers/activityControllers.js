@@ -285,3 +285,12 @@ export const getCustomerActivity = (req, res) => {
     res.status(200).json(results);
   });
 };
+
+export const activityHistory = (req, res) => {
+  const query = "SELECT * FROM customer_activity WHERE case_resolved = 'Resolved'";
+  db.query(query, (error, results) => {
+    if (error) return res.status(500).json({ error: error.message });
+    if (results.length === 0) return res.status(404).json({ message: "Activity not found." });
+    res.status(200).json(results);
+  });
+};
