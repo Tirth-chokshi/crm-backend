@@ -198,10 +198,7 @@ export const dailyFollowups = (req, res) => {
       c.name AS 'Customer Name',
       ca.activity_type AS 'Activity Type',
       ca.activity_date AS 'Date',
-      CASE 
-        WHEN ca.case_resolved = 'Resolved' THEN 'Resolved'
-        ELSE 'Not Resolved'
-      END AS 'Status'
+      ca.case_resolved AS 'Status'
     FROM 
       customer_activity ca
     JOIN 
