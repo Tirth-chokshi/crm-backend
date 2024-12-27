@@ -294,3 +294,12 @@ export const activityHistory = (req, res) => {
     res.status(200).json(results);
   });
 };
+
+export const todaysResolvedActivities = (req, res) => {
+  const query = "SELECT COUNT(*) as resolved_count FROM customer_activity WHERE case_resolved = 'Resolved' AND next_followup_date = CURDATE()";
+  db.query(query, (error, results) => {
+    if (error) return res.status(500).json({ error: error.message });
+    if (results.length === 0) return res.status(404).json({ message: "Activity not found." });
+    res.status(200).json(results);
+  });
+};
