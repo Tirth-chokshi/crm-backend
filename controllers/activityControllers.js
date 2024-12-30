@@ -303,3 +303,23 @@ export const todaysResolvedActivities = (req, res) => {
     res.status(200).json(results);
   });
 };
+
+
+export const deleteActivity = (req, res) => {
+  const { id } = req.params;
+  const query = "DELETE FROM customer_activity WHERE customer_activity_id = ?";
+  db.query(query, [id], (error, results) => {
+    if (error) return res.status(500).json({ error: error.message });
+    if (results.affectedRows === 0) return res.status(404).json({ message: "Activity not found." });
+    res.status(200).json({ message: "Activity deleted successfully!" });
+  });
+};
+
+export const todaysRemainingActivities = (req, res) => {
+  const query = "SELECT COUNT(*) as remaining_count FROM customer_activity WHERE case_resolved IN ('Pending', 'Not Resolved') AND next_followup_date = CURDATE()";
+  db.query(query, (error, results) => {
+    if (error) return res.status(500).json({ error: error.message });
+    if (results.length === 0) return res.status(404).json({ message: "Activity not found." });
+    res.status(200).json(results);
+  });
+};
